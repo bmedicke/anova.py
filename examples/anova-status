@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+notify() is specific to macOS!
+system() calls are specific to Unix-likes.
+
+TODO: clean up
+"""
+
+import os
+import time
+import anova
+import requests
+import ipdb
+
+
+def main():
+    with ipdb.launch_ipdb_on_exception():
+        cooker = anova.AnovaCooker('', '')
+        notified_of_end = False
+        notified_of_start = False
+
+        while True:
+            polling_rate = 5
+
+            try:
+                status = cooker.get_status_object()
+            except (KeyError, requests.ConnectionError):
+                print("[no connection]")
+                time.sleep(polling_rate)
+                os.system('clear')
+                continue
+
+            time.sleep(polling_rate)
+
+            job = status.get('current_job', None)
+
+            os.system('clear')
+            if job:
+                notified_of_start, notified_of_end = print_job_info(
+                        job, status, notified_of_start, notified_of_end
+                        )
+            else:
+                print_idle_info(status)
+            print_speaker_info(status)
+
+
+def notify(message):
+    os.system('/usr/bin/afplay /System/Library/Sounds/Submarine.aiff &')
+
+
+def print_speaker_info(status):
+    if status['speaker_mode']:
+        print(f"beeping on", end='', flush=True)
+    else:
+        print(f"beeping off", end='', flush=True)
+
+
+def print_idle_info(status):
+    current_temp = float(status['current_temp'])
+    target_temp = float(status['target_temp'])
+    temp_unit = '°' + status['temp_unit'].upper()
+    print(f"[not running]\n{current_temp}/{target_temp} {temp_unit}")
+
+
+def print_job_info(job, status, notified_of_start, notified_of_end):
+    start_time = job['job_start_time'].partition('.')[0].replace('T', ' ')
+    manual_job = False
+
+    try:
+        timer_length = int(job['timer_length']/60)
+        duration = int(job['job_info']['duration']/60)
+    except (KeyError):
+        timer_length = 0
+        duration = 0
+        manual_job = True
+
+    current_temp = float(status['current_temp'])
+    target_temp = float(status['target_temp'])
+    temp_unit = '°' + status['temp_unit'].upper()
+
+    if not notified_of_start and job['job_stage'] == 'cooking':
+        notify('water ready for food')
+        notified_of_start = True
+
+    if timer_length == 1 and not notified_of_end:
+        notify('cook done soon')
+        notified_of_end = True
+
+    print(f"[{job['job_stage']}]\n"
+          f"{current_temp}/{target_temp} {temp_unit}")
+    if not manual_job:
+        timer_length = divmod(timer_length, 60)
+        duration = divmod(duration, 60)
+        print(f"{timer_length[0]}h {timer_length[1]}m remaining", end='')
+
+        if duration[1] == 0:
+            print(f" ({duration[0]}h total)")
+        else:
+            print(f" ({duration[0]}h {duration[1]}m total)")
+
+    print(f"started: {start_time}")
+
+    return notified_of_start, notified_of_end
+
+
+if __name__ == "__main__":
+    main()

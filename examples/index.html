@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for HTML5 for Mac OS X version 5.2.0">
+  <style type="text/css">
+  #graphdiv {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 10px;
+    bottom: 10px;
+  }
+  .dygraph-legend {
+      opacity: 0.9 !important;
+      background-color: #444 !important;
+      color: grey;
+  }
+  html {
+      font-family: 'Verdana', sans-serif;
+      color: grey;
+      background-color: #454545;
+  }
+  </style>
+  <script type="text/javascript" src=
+  "https://cdnjs.cloudflare.com/ajax/libs/dygraph/1.2/dygraph-combined.min.js">
+  </script>
+  <title></title>
+</head>
+<body>
+  <div id="graphdiv"></div>
+  <script type="text/javascript">
+  g = new Dygraph(
+        document.getElementById("graphdiv"),
+        './temperature_log.csv', {
+            axisLabelColor: "grey",
+            labelsSeparateLines: true,
+            rightGap: 25,
+            strokeWidth: 1.5,
+            ylabel: 'temperature in °C',
+            colors: ['lime', 'white'],
+            showRangeSelector: true,
+            interactionModel: Dygraph.defaultInteractionModel,
+        }
+        );
+  </script>
+</body>
+</html>

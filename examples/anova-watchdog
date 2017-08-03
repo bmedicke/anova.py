@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+log timestamp, state, target and current temperature to
+csv file and warn when temperature deviates too much from target.
+
+play_warning() is specific to macOS!
+system() calls are specific to Unix-likes.
+
+TODO: clean up
+TODO: use new properties and methods
+"""
+
+import os
+import time
+from datetime import datetime
+import json
+import requests
+import anova
+
+
+def play_warning():
+    os.system('/usr/bin/afplay /System/Library/Sounds/Hero.aiff &')
+
+
+def main():
+    cooker = anova.AnovaCooker('', '')
+    polling_rate = 5
+
+    while True:
+        os.system('clear')
+
+        try:
+            status = json.loads(cooker.get_status())['status']
+        except (KeyError, requests.ConnectionError, json.decoder.JSONDecodeError):
+            print('no connection')
+            time.sleep(polling_rate)
+            continue
+
+        try:
+            job_stage = status['current_job']['job_stage']
+        except (KeyError):
+            job_stage = 'no job'
+
+        target_temp = status['target_temp']
+        current_temp = status['current_temp']
+        delta_temp = round(current_temp - target_temp, 2)
+        delta_percent = round(delta_temp / target_temp * 100, 2)
+
+        print(f"Δ {delta_temp:.2f}°C {delta_percent:.2f}%")
+
+        with open('temperature_log.csv', 'a') as out:
+            out.write(f"{datetime.now()},{job_stage},"
+                      f"{current_temp},{target_temp}\n")
+
+        if job_stage == 'cooking' or job_stage == 'maintaining':
+            if delta_percent < -2:
+                print(f"❄ food too cold! {current_temp}/{target_temp}°C")
+                play_warning()
+            elif delta_percent > 2:
+                print(f"☀ food too warm! {current_temp}/{target_temp}°C")
+        else:
+            print(f"[{job_stage}]")
+
+        time.sleep(polling_rate)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        import sys
+        import traceback
+        subject = f"{type(e).__name__} in {sys.argv[0]} [{os.uname()[1]}]"
+        message = traceback.format_exc()
+        # send mail here
+        raise

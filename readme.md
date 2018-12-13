@@ -71,6 +71,15 @@ pip3 install -e .
 ```
 
 ### getting your cooker_id and secret
+
+Since the implementation of certificate pinning the previous method no longer works.
+
+You can still get the `cooker_id` and `secret` with the method mentioned in this issue: [Certificate Pinning? #1](https://github.com/bmedicke/anova.py/issues/1#issuecomment-446835744).
+
+### getting your cooker_id and secret (deprecated)
+
+**Due to the implementation of certificate pinning the following method no longer works, see the section above for a workaround.**
+
 You will need to intercept the https traffic between your phone and the Anova API server.  <br>
 We'll be using [mitmproxy](https://mitmproxy.org/) to run a [man-in-the-middle attack](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
 

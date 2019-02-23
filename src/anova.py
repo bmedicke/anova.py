@@ -6,7 +6,7 @@ Module to interface with the the Anova Precision Cooker API.
 
 import json
 from typing import Union
-
+import time
 import requests
 
 
@@ -131,6 +131,19 @@ class AnovaCooker:
         """
         return json.loads(self.get_jobs())
 
+    def get_current_job(self) -> str:
+        """
+        returns the current job as a string.
+        """
+        status=self.get_status()
+        status=json.loads(status)
+        #Getting the current job will fail if ones doesn't exist
+        if 'current_job' in status['status']:
+            job_id=status['status']['current_job']['job_id']
+        else:
+            job_id=''
+        return(job_id)
+
     def create_job(self,
                    temperature: Union[int, float],
                    seconds: Union[int, float],
@@ -168,3 +181,75 @@ class AnovaCooker:
         }
 
         return self._post_request(self._jobs_url, payload)
+		
+    def start_ice_bath(self, temperature_unit: str='') -> str:
+        """
+        starts the ice bath and monitoring
+        """
+
+        if not temperature_unit:
+            temperature_unit = self.temperature_unit
+
+        #Set the proper threshold_temp for degrees f or degrees c
+        if temperature_unit == 'f' :
+            threshold_temp = 40.0
+        else:
+            threshold_temp = 4.4
+        #This starts the ice test.  It circulates the water for a few seconds to confirm temperature.  40.0f or 4.4c is the maximum
+        payload = {
+            'job_info': {
+                'duration': 0,
+                'display_item_identifier': '',
+                'source': '3',
+                'temperature': 0.0,
+                'temperature_unit': temperature_unit
+            },
+            'job_type': 'ice_bath_test',
+            'temp_unit': temperature_unit,
+            'threshold_temp': threshold_temp,
+			'timer_length': 0
+        }
+        post1=self._post_request(self._jobs_url, payload)
+        
+        #We need to wait for the test to finish - 15 seconds is probably too long
+        time.sleep(15)
+
+        #Confirm that the temperature is at or below the threshold_temp
+        status=self.get_status()
+        status=json.loads(status)
+        current_temp=status['status']['current_temp']
+        if (current_temp <= threshold_temp):
+            #We are at or below temp, start the monitoring
+            payload = {
+                'job_info': {
+                    'duration': 0,
+                    'display_item_identifier': '',
+                    'job_type': 'temperature_monitor',
+                    'source': '3',
+                    'temperature': 0.0,
+                    'temperature_unit': temperature_unit
+                },
+                'job_type': 'temperature_monitor',
+                'temp_unit': temperature_unit,
+                'threshold_temp': threshold_temp,
+		        'timer_length': 0
+            }
+            return self._post_request(self._jobs_url, payload)
+        else :
+            print('Ice bath not at temperature, aborting!')
+
+    def stop_ice_bath(self) -> str:
+        """
+        disables the ice bath monitoring
+        """
+        #Get the current job ID - this MUST be posted to the job or it will fail
+        job_id=self.get_current_job()
+        #Don't try to stop the job if it doesn't exist
+        if job_id != '':
+            payload = {"is_running": False,
+                       "timer_length": 0
+                      }
+            #We need to insert the job ID into the URL
+            new_url=self._jobs_url.replace('/jobs?secret=', '/jobs/' + job_id + '?secret=')
+            self._post_request(new_url, payload)
+            self.stop_alarm()

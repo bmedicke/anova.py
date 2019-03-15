@@ -158,7 +158,7 @@ if __name__ == '__main__':
 				time.sleep(3) #Wait just a few seconds for the command to complete
 				display=cooker.get_status()
 			else:
-				logging.arning('Cooker already running')
+				logging.warning('Cooker already running')
 				display=cooker.get_status()
 	elif m == "icebath":
 		cooker.start_ice_bath(t)

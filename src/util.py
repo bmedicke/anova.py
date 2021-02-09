@@ -26,34 +26,34 @@ def _decode(line: bytes) -> Tuple[int, str]:
 def get_secret_cookerid(ip: str) -> Tuple[str, str]:
     """Get secret and cooker_id from anova."""
 
-    anova_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    anova_socket.connect((ip, 9988))
-    count = 0
-    cooker_id = None
-    secret = None
-    while (cooker_id is None) and (secret is None):
-        line = bytearray()
-        if count % 128:
-            anova_socket.send(b"h")
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as anova_socket:
+        anova_socket.connect((ip, 9988))
+        count = 0
+        cooker_id = None
+        secret = None
+        while (cooker_id is None) and (secret is None):
+            line = bytearray()
+            if count % 128:
+                anova_socket.send(b"h")
 
-        data = anova_socket.recv(1024)
-        for d in range(0, len(data) - 1):
-            if (data[d], data[d + 1]) == (22, 104):
-                length, decoded = _decode(line)
-                if length == 22:
-                    cooker_id = decoded
-                if length == 11:
-                    secret = decoded
+            data = anova_socket.recv(1024)
+            for d in range(0, len(data) - 1):
+                if (data[d], data[d + 1]) == (22, 104):
+                    length, decoded = _decode(line)
+                    if length == 22:
+                        cooker_id = decoded
+                    if length == 11:
+                        secret = decoded
 
-                line = bytearray()
-            else:
-                line.append(data[d])
+                    line = bytearray()
+                else:
+                    line.append(data[d])
 
-        length, decoded = _decode(line)
-        if length == 22:
-            cooker_id = decoded
-        if length == 11:
-            secret = decoded
-        count += 1
+            length, decoded = _decode(line)
+            if length == 22:
+                cooker_id = decoded
+            if length == 11:
+                secret = decoded
+            count += 1
 
     return (cooker_id, secret)

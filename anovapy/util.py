@@ -31,7 +31,7 @@ def get_secret_cookerid(ip: str) -> Tuple[str, str]:
         count = 0
         cooker_id = None
         secret = None
-        while (cooker_id is None) and (secret is None):
+        while (cooker_id is None) or (secret is None):
             line = bytearray()
             if count % 128:
                 anova_socket.send(b"h")

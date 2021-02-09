@@ -23,22 +23,20 @@ class AnovaCooker:
         base_url = "https://api.anovaculinary.com/cookers/"
         self._url = base_url + cooker_id + "?secret=" + secret
         self._jobs_url = base_url + cooker_id + "/jobs?secret=" + secret
-        self._headers = {
-            'User-Agent': 'Cook/1.2.2 (iPhone; iOS 10.2; Scale/2.00)'
-        }
+        self._headers = {"User-Agent": "Cook/1.2.2 (iPhone; iOS 10.2; Scale/2.00)"}
 
     @property
     def current_temperature(self) -> Union[int, float]:
-        return self.get_status_object()['current_temp']
+        return self.get_status_object()["current_temp"]
 
     @property
     def target_temperature(self) -> Union[int, float]:
-        return self.get_status_object()['target_temp']
+        return self.get_status_object()["target_temp"]
 
     @target_temperature.setter
     def target_temperature(self, temperature: Union[int, float]) -> str:
-        payload = {'target_temp': temperature}
-        self._post_request(self._url, payload)
+        payload = {"target_temp": temperature}
+        return self._post_request(self._url, payload)
 
     @property
     def temperature_unit(self) -> str:
@@ -48,15 +46,14 @@ class AnovaCooker:
         'f' for Fahrenheit and
         '' for the currently set default unit.
         """
-        return self.get_status_object()['temp_unit']
+        return self.get_status_object()["temp_unit"]
 
     @temperature_unit.setter
     def temperature_unit(self, unit: str):
-        if unit not in ('c', 'f', ''):
-            raise ValueError(
-                "temperature_unit has to be either 'c', 'f' or ''")
+        if unit not in ("c", "f", ""):
+            raise ValueError("temperature_unit has to be either 'c', 'f' or ''")
 
-        payload = {'temp_unit': unit}
+        payload = {"temp_unit": unit}
         self._post_request(self._url, payload)
 
     @property
@@ -64,11 +61,11 @@ class AnovaCooker:
         """
         starts or stops the cooker.
         """
-        return self.get_status_object()['is_running']
+        return self.get_status_object()["is_running"]
 
     @running.setter
     def running(self, state: bool):
-        payload = {'is_running': state}
+        payload = {"is_running": state}
         self._post_request(self._url, payload)
 
     @property
@@ -78,11 +75,11 @@ class AnovaCooker:
         hurrah for late night cooking!
         be careful it also disables the minimum water level beeping.
         """
-        return self.get_status_object()['speaker_mode']
+        return self.get_status_object()["speaker_mode"]
 
     @speaker_mode.setter
     def speaker_mode(self, state: bool):
-        payload = {'speaker_mode': state}
+        payload = {"speaker_mode": state}
         self._post_request(self._url, payload)
 
     def _get_request(self, url: str) -> str:
@@ -97,7 +94,7 @@ class AnovaCooker:
         """
         calling this on its own does nothing. use create_job() instead.
         """
-        payload = {'timer_length': seconds}
+        payload = {"timer_length": seconds}
         return self._post_request(self._jobs_url, payload)
 
     def stop_alarm(self) -> str:
@@ -117,7 +114,7 @@ class AnovaCooker:
         """
         returns current status as a dictionary.
         """
-        return json.loads(self.get_status())['status']
+        return json.loads(self.get_status())["status"]
 
     def get_jobs(self) -> str:
         """
@@ -131,10 +128,12 @@ class AnovaCooker:
         """
         return json.loads(self.get_jobs())
 
-    def create_job(self,
-                   temperature: Union[int, float],
-                   seconds: Union[int, float],
-                   temperature_unit: str='') -> str:
+    def create_job(
+        self,
+        temperature: Union[int, float],
+        seconds: Union[int, float],
+        temperature_unit: str = "",
+    ) -> str:
         """
         passing temperature_unit is preferred since it is faster
         (skips request for current value) and avoids ambiguity in shared code.
@@ -146,25 +145,25 @@ class AnovaCooker:
         self.target_temperature = temperature
         self._set_timer(seconds)
 
-        temp_unit_expansion = {'c': 'Celsius', 'f': 'Fahrenheit'}
+        temp_unit_expansion = {"c": "Celsius", "f": "Fahrenheit"}
         payload = {
-            'is_running': False,
-            'job_id': '',
-            'job_info': {
-                'display_item_identifier': '',
-                'duration': seconds,
-                'source': 'user_defined',
-                'source_identifier': '',
-                'temperature': temperature,
-                'temperature_unit': temp_unit_expansion[temperature_unit]
+            "is_running": False,
+            "job_id": "",
+            "job_info": {
+                "display_item_identifier": "",
+                "duration": seconds,
+                "source": "user_defined",
+                "source_identifier": "",
+                "temperature": temperature,
+                "temperature_unit": temp_unit_expansion[temperature_unit],
             },
-            'job_stage': 0,
-            'job_type': 'manual_cook',
-            'max_circulation_interval': 0,
-            'target_temp': temperature,
-            'temp_unit': temperature_unit,
-            'threshold_temp': 0,
-            'timer_length': seconds
+            "job_stage": 0,
+            "job_type": "manual_cook",
+            "max_circulation_interval": 0,
+            "target_temp": temperature,
+            "temp_unit": temperature_unit,
+            "threshold_temp": 0,
+            "timer_length": seconds,
         }
 
         return self._post_request(self._jobs_url, payload)

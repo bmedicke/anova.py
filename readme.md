@@ -72,40 +72,12 @@ pip3 install -e .
 
 ### getting your cooker_id and secret
 
-Since the implementation of certificate pinning the previous method no longer works.
+You could use `anova.util.get_secret_cookerid` with ip address as argument.
 
-You can still get the `cooker_id` and `secret` with the method mentioned in this issue: [Certificate Pinning? #1](https://github.com/bmedicke/anova.py/issues/1#issuecomment-446835744).
+```python
+from anova.util import get_secret_cookerid
 
-### getting your cooker_id and secret (deprecated)
-
-**Due to the implementation of certificate pinning the following method no longer works, see the section above for a workaround.**
-
-You will need to intercept the https traffic between your phone and the Anova API server.  <br>
-We'll be using [mitmproxy](https://mitmproxy.org/) to run a [man-in-the-middle attack](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
-
-#### on the intercepting server
-```sh
-# install mitmproxy
-pip3 install mitmproxy
-
-# now run it:
-mitmproxy
-
-# or if you prefer a browser UI:
-mitmweb
+cooker_id, secret = get_secret_cookerid("192.168.1.234")
+print(f"Cooker id: {cooker_id}")
+print(f"Secret: {secret}")
 ```
-
-#### on your phone
-
-- set up an http proxy with your server's IP address and 8080 as the port (mitmproxy default)
-- go to http://mitm.it and install the certificate
-- run the Anova Wi-Fi app
-
-#### back on your server
-
-- filter for `api.anovaculinary.com` and look for any POST or GET request
-- your `cooker_id` is the string between `https://api.anovaculinary.com/cookers/` and `?request_key`
-- your `secret` is the string after `&secret=`
-
-Don't forget to remove or disable the http proxy when you are done. You might also want to remove the certificate too.<br>
-Please don't hammer the server. The iOS app polls about once every 5 seconds, try to stick to that. The cooker does not even seem to update that often, so there is no point in polling any faster.

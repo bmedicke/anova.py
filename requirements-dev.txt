@@ -1,0 +1,14 @@
+black
+bump2version
+flake8
+flake8-black
+flake8-builtins
+flake8-isort
+ipython
+jedi
+mypy
+pylint
+pytest
+tox
+twine
+-r requirements.txt
